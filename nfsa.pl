@@ -2,7 +2,7 @@
 
 % Funzioni dell'interfaccia, pensate per l'uso esterno
 
-
+%is_regex/1
 %is_regex funzione pensata sia per uso esterno sia per uso interno da
 %parte del predicato "nfsa_compile_regex/2"
 
@@ -25,8 +25,11 @@ is_regex(RE) :-
 is_regex(RE) :-
     compound(RE),
     functor(RE, F, _),
-    \+ reserved_functor(F).
+    \+ reserved_functor(F),
+    !.
 
+
+%nfsa_conpile_regex/2
 
 % nfsa_compile_regex crea un NFSA corrispondente alla RE fornita e lo
 % inserisce nel DB
@@ -37,7 +40,11 @@ nfsa_compile_regex(FA_Id, RE) :-
     %nfsa_delete(FA_Id),  %Rimuovere il "%" se si vuole riusare ID
     compile_frag(FA_Id, RE, S, F),
     assertz(nfsa_init(FA_Id, S)),
-    assertz(nfsa_final(FA_Id, F)).
+    assertz(nfsa_final(FA_Id, F)),
+    !.
+
+
+%nfsa_delete/1
 
 %nfsa_delete elimina l'automa corrispondente all'ID fornito
 nfsa_delete(FA_Id) :-
@@ -45,12 +52,28 @@ nfsa_delete(FA_Id) :-
     retractall(nfsa_final(FA_Id, _)),
     retractall(nfsa_delta(FA_Id, _, _, _)).
 
+
+%nfsa_delete_all/0
+
 %rimuove dal database dinamico tutti gli
 nfsa_delete_all :-
     retractall(nfsa_init(_, _)),
     retractall(nfsa_final(_, _)),
     retractall(nfsa_delta(_, _, _, _)).
 
+
+% nfsa_recognize/2
+
+% verifica se la lista in input porta a stato finale nell'automa con id
+% corrispondente
+nfsa_recognize(FA_Id, Input) :-
+    is_list(Input),
+    input_symbols_ok(Input),
+    !,
+    nfsa_init(FA_Id, S0),
+    epsilon_closure(FA_Id, [S0], C0),
+    recognize_from(FA_Id, C0, Input, CF),
+    has_final_state(FA_Id, CF).
 
 
 % Funzioni ausiliarie impiegate nell'uso interno
@@ -169,6 +192,58 @@ compile_alt_branches(FA, [R|Rs], S, F, Eps) :-
 %fresh_state crea nuovi stati
 fresh_state(Q) :-
     gensym(q, Q).
+
+%Verifica che i "simboli" siano dell'alfabeto
+input_symbols_ok([]).
+input_symbols_ok([X|Xs]) :-
+    ( atomic(X) ; compound(X) ),
+    input_symbols_ok(Xs).
+
+% Simulazione NFSA
+recognize_from(_FA, CurrStates, [], CurrStates) :- !.
+recognize_from(FA, CurrStates, [Sym|Rest], FinalStates) :-
+    move(FA, CurrStates, Sym, Next0),
+    Next0 \= [],
+    epsilon_closure(FA, Next0, Next),
+    recognize_from(FA, Next, Rest, FinalStates).
+
+%verifica che lo stato corrente sia final
+has_final_state(FA, States) :-
+    member(S, States),
+    nfsa_final(FA, S),
+    !.
+
+move(FA, States, Sym, NextStates) :-
+    findall(To,
+            ( member(From, States),
+              nfsa_delta(FA, From, Label, To),
+              Label == Sym
+            ),
+            Tos),
+    sort(Tos, NextStates).
+
+epsilon_closure(FA, Seeds, Closure) :-
+    sort(Seeds, SeedsSet),
+    eps_bfs(FA, SeedsSet, SeedsSet, Closure).
+
+eps_bfs(_FA, [], Vis, Vis) :- !.
+eps_bfs(FA, [S|Queue], Vis, Closure) :-
+    findall(T, nfsa_delta(FA, S, eps, T), Ts),
+    filter_new(Ts, Vis, New),
+    append(Queue, New, Queue1),
+    append(Vis, New, Vis1),
+    eps_bfs(FA, Queue1, Vis1, Closure).
+
+
+
+filter_new([], _Visited, []).
+filter_new([X|Xs], Visited, New) :-
+    ( memberchk(X, Visited) ->
+        filter_new(Xs, Visited, New)
+    ;
+        New = [X|Rest],
+        filter_new(Xs, [X|Visited], Rest)
+    ).
 
 %DB-base di conoscenza
 
