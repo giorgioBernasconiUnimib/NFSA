@@ -7,12 +7,12 @@
 %parte del predicato "nfsa_compile_regex/2"
 
 % Prima viene verificato che RE sia un atomo prolog, se soddisfa
-% atomic/1 è una regex
+% atomic/1 Ã¨ una regex
 is_regex(RE) :-
     atomic(RE),
     !.
 
-%Verifica se RE è vera per compund/1, se lo è deve verificare prima che
+%Verifica se RE Ã¨ vera per compund/1, se lo Ã¨ deve verificare prima che
 %functor non abbia uno riservato
 is_regex(RE) :-
     compound(RE),
@@ -37,7 +37,7 @@ nfsa_compile_regex(FA_Id, RE) :-
     ground(FA_Id),
     is_regex(RE),
     !,
-    %nfsa_delete(FA_Id),  %Rimuovere il "%" se si vuole riusare ID
+    nfsa_delete(FA_Id),
     compile_frag(FA_Id, RE, S, F),
     assertz(nfsa_init(FA_Id, S)),
     assertz(nfsa_final(FA_Id, F)),
@@ -125,7 +125,7 @@ compile_frag(FA, z(R), S, F) :-
     assertz(nfsa_delta(FA, F1, Eps, S1)),
     assertz(nfsa_delta(FA, F1, Eps, F)).
 
-%caso o, "1 o più"
+%caso o, "1 o piÃ¹"
 compile_frag(FA, o(R), S, F) :-
     !,
     fresh_state(S),
@@ -263,3 +263,4 @@ reserved_functor(o).
 
 %permette di definire come sempre true le epsilon transition
 epsilon(eps).
+
