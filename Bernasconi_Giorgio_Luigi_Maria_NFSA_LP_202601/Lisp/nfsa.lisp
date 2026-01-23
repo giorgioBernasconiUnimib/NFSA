@@ -167,7 +167,6 @@
 ;;;verifica se l'argomento è una regex
 (defun is-regex (re)
   (cond
-    ((null re) nil)
     ((atom re) t)
     ((consp re)
      (let ((op (car re)))
@@ -221,4 +220,5 @@
       (setf curr (epsilon-closure delta (move delta curr sym)))
       (when (null curr)
         (return-from nfsa-recognize nil)))
+
     (and (has-final-state-p curr finals) t)))
