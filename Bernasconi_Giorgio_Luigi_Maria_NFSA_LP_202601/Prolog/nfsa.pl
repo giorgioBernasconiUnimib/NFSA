@@ -10,6 +10,8 @@
 % atomic/1 è una regex
 is_regex(RE) :-
     atomic(RE),
+    epsilon(Eps),
+    RE \== Eps,
     !.
 
 %Verifica se RE è vera per compund/1, se lo è deve verificare prima che
@@ -263,4 +265,5 @@ reserved_functor(o).
 
 %permette di definire come sempre true le epsilon transition
 epsilon(eps).
+
 
