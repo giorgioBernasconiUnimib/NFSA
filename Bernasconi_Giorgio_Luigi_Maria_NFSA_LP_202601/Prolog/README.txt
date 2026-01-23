@@ -14,7 +14,7 @@ States: lista di stati correnti durante la simulazione
 Eps: simbolo riservato per le epsilon-transition
 
 !!  Nota importante  !!
-Per evitare ambiguita', eps è riservato esclusivamente per le epsilon-transition, quindi non è ammesso come simbolo dell'alfabeto nè nelle regex nè nelle liste Input passate a nfsa_recognize/2.
+Per evitare ambiguità, eps è riservato esclusivamente per le epsilon-transition, quindi non è ammesso come simbolo dell'alfabeto nè nelle regex nè nelle liste Input passate a nfsa_recognize/2.
 
 -----------------------------------------------------------------------
 
@@ -22,14 +22,14 @@ Uso delle funzioni
 
 Queste sono le funzioni dell'interfaccia, ovvero quelle pensate per essere accessibili dall'esterno.
 
-E' fondamentale che gli input forniti siano corretti, altrimenti la query dara' risposta "false". In particolare:
+E' fondamentale che gli input forniti siano corretti, altrimenti la query darà risposta "false". In particolare:
 - FA_Id deve essere ground (un identificatore senza variabili)
 - Input deve essere una lista
 - Ogni simbolo di Input deve essere atomic/1 oppure compound/1
-- eps non e' ammesso come simbolo di input perche' riservato a epsilon
+- eps non è ammesso come simbolo di input perchè riservato a epsilon
 
 - is_regex(RE):
-Verifica se il termine RE e' una regex valida secondo la specifica.
+Verifica se il termine RE è una regex valida secondo la specifica.
 Accetta:
 1) atomic/1 come simbolo, escludendo eps.
 2) compound/1 se e solo se:
@@ -40,7 +40,7 @@ Accetta:
 
 - nfsa_compile_regex(FA_Id, RE):
 Compila la regex RE in un automa NFSA identificato da FA_Id e lo inserisce nel database dinamico.
-Se esiste gia' un automa con lo stesso id, viene prima eliminato.
+Se esiste già un automa con lo stesso id, viene prima eliminato.
 La compilazione segue una costruzione a frammenti (stile Thompson), creando stati nuovi con gensym/2 e salvando le transizioni tramite nfsa_delta/4.
 
 - nfsa_recognize(FA_Id, Input):
@@ -70,8 +70,8 @@ Validazione e supporto alle regex:
 - is_reserved_regex(F, Arity, RE):
 Controlla che una regex con funtore riservato sia ben formata.
 I costruttori riservati sono:
-z(<re>) : chiusura di Kleene (0 o piu')
-o(<re>) : uno o piu'
+z(<re>) : chiusura di Kleene (0 o più)
+o(<re>) : uno o piu
 c(<re1>,...,<rek>) : concatenazione (k >= 1)
 a(<re1>,...,<rek>) : alternativa (k >= 1)
 
