@@ -118,7 +118,7 @@ stato in States tramite una transizione etichettata esattamente Sym.
 Calcola la chiusura epsilon dell'insieme Seeds, restituendo Closure.
 
 - eps_bfs(FA, Queue, Visited, Closure):
-Esegue una BFS sugli stati raggiungibili con sole epsilon-transition. Queue e' la coda BFS, Visited l'insieme degli stati gia' visitati.
+Esegue una BFS sugli stati raggiungibili con sole epsilon-transition. Queue è la coda BFS, Visited l'insieme degli stati gia' visitati.
 
 - filter_new(Ts, Visited, New):
 Filtra gli stati in Ts rimuovendo quelli gia' visitati, restituendo la lista dei soli stati nuovi.
@@ -126,13 +126,13 @@ Filtra gli stati in Ts rimuovendo quelli gia' visitati, restituendo la lista dei
 Rappresentazione nel database dinamico:
 
 - nfsa_init(FA_Id, State):
-Stato iniziale dell'automa FA_Id.
+Stato iniziale dell'automa FA_Id
 
 - nfsa_final(FA_Id, State):
-Stato finale dell'automa FA_Id.
+Stato finale dell'automa FA_Id
 
 - nfsa_delta(FA_Id, From, Label, To):
-Transizione dell'automa FA_Id dallo stato From allo stato To con etichetta Label. Se Label = eps, la transizione e' una epsilon-transition.
+Transizione dell'automa, Fa_Id l'identificatore, From e To gli stati coinvolti e Label è l'etichetta della transizione
 
 - epsilon(eps):
-Definisce il simbolo riservato per le epsilon-transition.
+Il simbolo RISERVATO delle transizioni epsilon
