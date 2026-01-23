@@ -199,6 +199,8 @@ fresh_state(Q) :-
 input_symbols_ok([]).
 input_symbols_ok([X|Xs]) :-
     ( atomic(X) ; compound(X) ),
+    epsilon(Eps),
+    X \== Eps,
     input_symbols_ok(Xs).
 
 % Simulazione NFSA
@@ -265,5 +267,6 @@ reserved_functor(o).
 
 %permette di definire come sempre true le epsilon transition
 epsilon(eps).
+
 
 
