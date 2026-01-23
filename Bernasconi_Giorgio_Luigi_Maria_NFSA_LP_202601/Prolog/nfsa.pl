@@ -1,21 +1,44 @@
 %Bernasconi Giorgio Luigi Maria 885948
 
+
+
+%DB-base di conoscenza
+
+%Funtori riservati per le regex
+reserved_functor(c).
+reserved_functor(a).
+reserved_functor(z).
+reserved_functor(o).
+
+
+% Questi tre predicati rappresentano l'automa in memoria, informa prolog
+% che: nfsa_init, nfsa_final e nfsa_delta, saranno creati solo
+% dinamicamente durante l'esecuzione
+:- dynamic nfsa_init/2.
+:- dynamic nfsa_final/2.
+:- dynamic nfsa_delta/4.
+
+%permette di definire come sempre true le epsilon transition
+epsilon(eps).
+
+
+
 % Funzioni dell'interfaccia, pensate per l'uso esterno
 
 %is_regex/1
 %is_regex funzione pensata sia per uso esterno sia per uso interno da
 %parte del predicato "nfsa_compile_regex/2"
 
-% Prima viene verificato che RE sia un atomo prolog, se soddisfa
-% atomic/1 è una regex
+% Prima viene verificato che RE sia un atomo prolog, escludendo
+%però eps
 is_regex(RE) :-
     atomic(RE),
     epsilon(Eps),
     RE \== Eps,
     !.
 
-%Verifica se RE è vera per compund/1, se lo è deve verificare prima che
-%functor non abbia uno riservato
+%Verifica se RE è vera per compund/1 e che sia uno dei funtori
+%riservati, se e' riservato, controlla che la forma sia corretta
 is_regex(RE) :-
     compound(RE),
     functor(RE, F, Arity),
@@ -34,7 +57,7 @@ is_regex(RE) :-
 %nfsa_conpile_regex/2
 
 % nfsa_compile_regex crea un NFSA corrispondente alla RE fornita e lo
-% inserisce nel DB
+% inserisce nel DB, eliminando prima eventuali definizioni precedenti
 nfsa_compile_regex(FA_Id, RE) :-
     ground(FA_Id),
     is_regex(RE),
@@ -57,7 +80,7 @@ nfsa_delete(FA_Id) :-
 
 %nfsa_delete_all/0
 
-%rimuove dal database dinamico tutti gli
+%nfsa_delete_all rimuove dal database dinamico tutti gli automi
 nfsa_delete_all :-
     retractall(nfsa_init(_, _)),
     retractall(nfsa_final(_, _)),
@@ -66,8 +89,8 @@ nfsa_delete_all :-
 
 % nfsa_recognize/2
 
-% verifica se la lista in input porta a stato finale nell'automa con id
-% corrispondente
+% nfsa_recognize verifica se la lista in input porta a stato finale
+% nell'automa con id corrispondente, usando epsilon-closure e move
 nfsa_recognize(FA_Id, Input) :-
     is_list(Input),
     input_symbols_ok(Input),
@@ -112,7 +135,6 @@ all_regex([X|Xs]):-
 
 
 %compilazione a frammenti
-
 
 
 %caso z, chiusura di Kleene
@@ -161,12 +183,13 @@ compile_frag(FA, RE, S, F) :-
 
 %CONCAT
 
-%
+%compile_concat compila una lista di regex in sequenza
+%Ogni frammento viene collegato al successivo con una
+%epsilon-transition
 compile_concat(FA, [R|Rs], S, F) :-
     compile_frag(FA, R, S, F0),
     compile_concat_rest(FA, Rs, F0, F).
 
-%
 compile_concat_rest(_FA, [], CurrentEnd, CurrentEnd).
 compile_concat_rest(FA, [R|Rs], CurrentEnd, FinalEnd) :-
     compile_frag(FA, R, Snext, Fnext),
@@ -176,14 +199,14 @@ compile_concat_rest(FA, [R|Rs], CurrentEnd, FinalEnd) :-
 
 %ALT
 
-%
+%compile_alt compila una lista di alternative creando un nodo di split
+%ed un nodo di merge, collegati con epsilon-transition ai vari rami
 compile_alt(FA, [R|Rs], S, F) :-
     fresh_state(S),
     fresh_state(F),
     epsilon(Eps),
     compile_alt_branches(FA, [R|Rs], S, F, Eps).
 
-%
 compile_alt_branches(_FA, [], _S, _F, _Eps).
 compile_alt_branches(FA, [R|Rs], S, F, Eps) :-
     compile_frag(FA, R, Sr, Fr),
@@ -204,6 +227,7 @@ input_symbols_ok([X|Xs]) :-
     input_symbols_ok(Xs).
 
 % Simulazione NFSA
+%recognize_from simula l'automa consumando l'input simbolo per simbolo
 recognize_from(_FA, CurrStates, [], CurrStates) :- !.
 recognize_from(FA, CurrStates, [Sym|Rest], FinalStates) :-
     move(FA, CurrStates, Sym, Next0),
@@ -211,12 +235,15 @@ recognize_from(FA, CurrStates, [Sym|Rest], FinalStates) :-
     epsilon_closure(FA, Next0, Next),
     recognize_from(FA, Next, Rest, FinalStates).
 
-%verifica che lo stato corrente sia final
+%has_final_state verifica che tra gli stati correnti ci sia uno stato finale
 has_final_state(FA, States) :-
     member(S, States),
     nfsa_final(FA, S),
     !.
 
+
+%move calcola gli stati raggiungibili con transizioni etichettate con il
+%simbolo corrente
 move(FA, States, Sym, NextStates) :-
     findall(To,
             ( member(From, States),
@@ -226,10 +253,15 @@ move(FA, States, Sym, NextStates) :-
             Tos),
     sort(Tos, NextStates).
 
+
+%epsilon_closure calcola la chiusura epsilon di un insieme di stati
+%Parte dai Seeds e visita tutti gli stati raggiungibili con sole epsilon
 epsilon_closure(FA, Seeds, Closure) :-
     sort(Seeds, SeedsSet),
     eps_bfs(FA, SeedsSet, SeedsSet, Closure).
 
+%eps_bfs esegue una BFS sugli stati raggiungibili tramite epsilon-transition
+%Queue e' la coda BFS, Vis e' l'insieme degli stati gia' visitati
 eps_bfs(_FA, [], Vis, Vis) :- !.
 eps_bfs(FA, [S|Queue], Vis, Closure) :-
     findall(T, nfsa_delta(FA, S, eps, T), Ts),
@@ -238,8 +270,8 @@ eps_bfs(FA, [S|Queue], Vis, Closure) :-
     append(Vis, New, Vis1),
     eps_bfs(FA, Queue1, Vis1, Closure).
 
-
-
+%filter_new rimuove dalla lista i nodi gia' visitati
+%Restituisce solo quelli nuovi da aggiungere alla BFS
 filter_new([], _Visited, []).
 filter_new([X|Xs], Visited, New) :-
     ( memberchk(X, Visited) ->
@@ -249,24 +281,6 @@ filter_new([X|Xs], Visited, New) :-
         filter_new(Xs, [X|Visited], Rest)
     ).
 
-%DB-base di conoscenza
-
-%Funtori riservati per le regex
-reserved_functor(c).
-reserved_functor(a).
-reserved_functor(z).
-reserved_functor(o).
-
-
-% Questi tre predicati rappresentano l'automa in memoria, informa prolog
-% che: nfsa_init, nfsa_final e nfsa_delta, saranno creati solo
-% dinamicamente durante l'esecuzione
-:- dynamic nfsa_init/2.
-:- dynamic nfsa_final/2.
-:- dynamic nfsa_delta/4.
-
-%permette di definire come sempre true le epsilon transition
-epsilon(eps).
 
 
 
