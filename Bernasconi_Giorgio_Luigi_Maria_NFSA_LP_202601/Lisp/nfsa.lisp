@@ -1,4 +1,4 @@
-;;;;Bernasconi Giorgio Luigi Maria 885948
+;;;;Bernasconi	Giorgio	Luigi	Maria	885948
 
 
 ;;; Struttura dell'automa NFSA
@@ -229,4 +229,5 @@
         (return-from nfsa-recognize nil)))
 
     (and (has-final-state-p curr finals) t)))
+
 
