@@ -117,13 +117,13 @@ is_reserved_regex(o, 1, RE):-
 
 %c(<re1>, <re2>, ..., <rek>)
 is_reserved_regex(c, Arity, RE):-
-    Arity >=1,
+    Arity >= 1,
     RE =.. [c|Args],
     all_regex(Args).
 
 %a(<re1>, <re2>, ..., <rek>)
 is_reserved_regex(a, Arity, RE):-
-    Arity >=1,
+    Arity >= 1,
     RE =.. [a|Args],
     all_regex(Args).
 
@@ -280,6 +280,7 @@ filter_new([X|Xs], Visited, New) :-
         New = [X|Rest],
         filter_new(Xs, [X|Visited], Rest)
     ).
+
 
 
 
