@@ -40,16 +40,11 @@ Accetta:
 
 - nfsa_compile_regex(FA_Id, RE):
 Compila la regex RE in un automa NFSA identificato da FA_Id e lo inserisce nel database dinamico.
-Se esiste già un automa con lo stesso id, viene prima eliminato.
-La compilazione segue una costruzione a frammenti (stile Thompson), creando stati nuovi con gensym/2 e salvando le transizioni tramite nfsa_delta/4.
+Fa una chiamata di is_regex/1 per verificare che RE sia stato inserito correttamente, se esiste già un automa con lo stesso id, viene prima eliminato.
+La funzione attua una costruzione a frammenti, delegandola alle funzioni elencate nella sezione: "Compilazione a frammenti"
 
 - nfsa_recognize(FA_Id, Input):
-Simula l'automa identificato da FA_Id sulla lista di simboli Input.
-La procedura:
-  1) controlla la correttezza di Input (inclusa l'esclusione di eps).
-  2) calcola la epsilon-closure dello stato iniziale.
-  3) consuma l'input simbolo per simbolo eseguendo move e poi epsilon-closure.
-  4) accetta se tra gli stati raggiunti al termine dell'input esiste almeno uno stato finale.
+Simula l'automa identificato da FA_Id sulla lista di simboli Input. Per farlo delega alle funzioni descritte nel dettaglio in: "Simulazione dell'NFSA"
 
 - nfsa_delete(FA_Id):
 Elimina dal database dinamico l'automa con identificatore FA_Id, rimuovendo fatti nfsa_init/2, nfsa_final/2 e nfsa_delta/4 associati.
@@ -65,7 +60,7 @@ Funzioni ausiliarie
 Queste funzioni non sono pensate per l'utilizzo esterno alla libreria.
 Si limitano a fornire logica addizionale necessaria per la validazione delle regex, la compilazione e la simulazione dell'automa.
 
-Validazione e supporto alle regex:
+Supporto a identificazione:
 
 - is_reserved_regex(F, Arity, RE):
 Controlla che una regex con funtore riservato sia ben formata.
