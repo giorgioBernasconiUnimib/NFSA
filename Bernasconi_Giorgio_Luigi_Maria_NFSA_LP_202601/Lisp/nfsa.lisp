@@ -118,7 +118,14 @@
        (symbolp (nfsa-init fa))
        (proper-list-p (nfsa-finals fa))
        (every #'symbolp (nfsa-finals fa))
-       (proper-list-p (nfsa-delta fa))))
+       (proper-list-p (nfsa-delta fa))
+       (every (lambda (tr)
+                (and (proper-list-p tr)
+                     (= (length tr) 3)
+                     (symbolp (first tr))
+                     (symbolp (third tr))))
+              (nfsa-delta fa))))
+
 
 ;;;Calcola gli stati raggiungibili da STATES leggendo SYM (no epsilon).
 (defun move (delta states sym)
@@ -222,3 +229,4 @@
         (return-from nfsa-recognize nil)))
 
     (and (has-final-state-p curr finals) t)))
+
