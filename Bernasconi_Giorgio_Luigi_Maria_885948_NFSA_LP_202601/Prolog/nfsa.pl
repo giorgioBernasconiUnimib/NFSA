@@ -37,6 +37,15 @@ is_regex(RE) :-
     RE \== Eps,
     !.
 
+%Verifica il caso in cui vi sia una compond ma con arietà zero
+%in questo caso collassano in atomi
+is_regex(RE) :-
+    compound(RE),
+    RE =.. [F],
+    atom(F),
+    !,
+    is_regex(F).
+
 %Verifica se RE è vera per compund/1 e che sia uno dei funtori
 %riservati, se e' riservato, controlla che la forma sia corretta
 is_regex(RE) :-
@@ -136,6 +145,12 @@ all_regex([X|Xs]):-
 
 %compilazione a frammenti
 
+%normalizza i casi in cui abbiamo F() in atomi F
+compile_frag(FA, RE, S, F) :-
+    normalize_zero_arity(RE, REn),
+    RE \== REn,
+    !,
+    compile_frag(FA, REn, S, F).
 
 %caso z, chiusura di Kleene
 compile_frag(FA, z(R), S, F) :-
@@ -179,7 +194,8 @@ compile_frag(FA, RE, S, F) :-
     !,
     fresh_state(S),
     fresh_state(F),
-    assertz(nfsa_delta(FA, S, RE, F)).
+    normalize_zero_arity(RE, REn),
+    assertz(nfsa_delta(FA, S, REn, F)).
 
 %CONCAT
 
@@ -221,9 +237,10 @@ fresh_state(Q) :-
 %Verifica che i "simboli" siano dell'alfabeto
 input_symbols_ok([]).
 input_symbols_ok([X|Xs]) :-
-    ( atomic(X) ; compound(X) ),
+    normalize_zero_arity(X, Xn),
+    ( atomic(Xn) ; compound(Xn) ),
     epsilon(Eps),
-    X \== Eps,
+    Xn \== Eps,
     input_symbols_ok(Xs).
 
 % Simulazione NFSA
@@ -245,10 +262,11 @@ has_final_state(FA, States) :-
 %move calcola gli stati raggiungibili con transizioni etichettate con il
 %simbolo corrente
 move(FA, States, Sym, NextStates) :-
+    normalize_zero_arity(Sym, SymN),
     findall(To,
             ( member(From, States),
               nfsa_delta(FA, From, Label, To),
-              Label == Sym
+              Label == SymN
             ),
             Tos),
     sort(Tos, NextStates).
@@ -279,4 +297,16 @@ filter_new([X|Xs], Visited, New) :-
     ;
         New = [X|Rest],
         filter_new(Xs, [X|Visited], Rest)
+
+    ).
+
+%normalize_zero_ariety
+% Se Term è della forma F(), lo normalizza in atomo F.
+% Altrimenti lascia invariato.
+normalize_zero_arity(Term, Norm) :-
+    (  compound(Term),
+       Term =.. [F],
+       atom(F)
+    -> Norm = F
+    ;  Norm = Term
     ).
