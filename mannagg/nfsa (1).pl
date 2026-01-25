@@ -38,6 +38,7 @@ is_regex(RE) :-
     RE \== Eps,
     !.
 
+%Caso con arietà a 0
 is_regex(RE) :-
     compound(RE),
     functor(RE, F, 0, _), !,
