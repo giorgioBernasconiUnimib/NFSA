@@ -30,24 +30,23 @@ epsilon(eps).
 %parte del predicato "nfsa_compile_regex/2"
 
 % Prima viene verificato che RE sia un atomo prolog, escludendo
-%però eps
+% però eps
 is_regex(RE) :-
     atomic(RE),
     epsilon(Eps),
     RE \== Eps,
     !.
 
-%Verifica il caso in cui vi sia una compond ma con arietà zero
-%in questo caso collassano in atomi
+% Verifica il caso in cui vi sia una compound ma con arietà zero
+% in questo caso collassano in atomi
 is_regex(RE) :-
     compound(RE),
-    RE =.. [F],
-    atom(F),
+    compound_name_arity(RE, F, 0),
     !,
     is_regex(F).
 
-%Verifica se RE è vera per compund/1 e che sia uno dei funtori
-%riservati, se e' riservato, controlla che la forma sia corretta
+% Verifica se RE è vera per compound/1 e che sia uno dei funtori
+% riservati; se e' riservato, controlla che la forma sia corretta
 is_regex(RE) :-
     compound(RE),
     functor(RE, F, Arity),
@@ -55,7 +54,7 @@ is_regex(RE) :-
     !,
     is_reserved_regex(F, Arity, RE).
 
-%Accettautte le compound come simboli dell'alfabeto
+% Accetta tutte le compound come simboli dell'alfabeto
 is_regex(RE) :-
     compound(RE),
     functor(RE, F, _),
@@ -305,7 +304,7 @@ filter_new([X|Xs], Visited, New) :-
 % Altrimenti lascia invariato.
 normalize_zero_arity(Term, Norm) :-
     (  compound(Term),
-       Term =.. [F],
+       compound_name_arity(Term, F, 0)
        atom(F)
     -> Norm = F
     ;  Norm = Term
